@@ -1,0 +1,37 @@
+# .NET build
+bin/
+obj/
+publish/
+publish_test/
+publish selfcontained/
+*.user
+*.suo
+.vs/
+*.DS_Store
+Thumbs.db
+
+# Settings & logs (user runtime)
+# Keep templates but ignore actual user data if ever copied
+# (LocalAppData is outside repo, but ignore if someone copies it)
+settings.json
+powersave.log
+powersave.log.old
+
+# Single-file publish extras
+*.pdb
+*.ilk
+
+# IDE
+.idea/
+*.swp
+*~
+
+# OS
+Desktop.ini
+ehthumbs.db
+
+# Self-contained large drops (optional)
+# publish/selfcontained/
+
+# CI workflow excluded: needs gh token with 'workflow' scope to push
+.github/workflows/
