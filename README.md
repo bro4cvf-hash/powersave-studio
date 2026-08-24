@@ -171,4 +171,4 @@ MIT — see [LICENSE](LICENSE). Icons: Heroicons (MIT), Tabler (MIT), Lucide (IS
 
 ---
 
-*Built by FSOS Labs — for laptops that refuse to die.*
+*Built by Vizzy — for laptops that refuse to die. Crafted with FSOS Labs.*
