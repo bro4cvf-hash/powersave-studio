@@ -60,6 +60,23 @@ jobs:
           path: installer/output/PowerSave-portable.zip
           if-no-files-found: error
 
+      # Keep the shipped setup.exe inside the codebase (installer/output/).
+      # Pushes made with GITHUB_TOKEN do not re-trigger workflows, so this
+      # cannot loop. [skip ci] belt-and-braces.
+      - name: Commit setup.exe back to the repo
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add installer/output/PowerSave-Setup.exe
+          if git diff --cached --quiet; then
+            echo "setup.exe unchanged — nothing to commit"
+          else
+            git commit -m "chore(ci): rebuild installer/output/PowerSave-Setup.exe [skip ci]"
+            git push || (git pull --rebase && git push)
+          fi
+
       - name: Create GitHub Release (tags only)
         if: startsWith(github.ref, 'refs/tags/')
         shell: bash
