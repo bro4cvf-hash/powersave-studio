@@ -151,19 +151,19 @@ internal static class Theme
         // Top edge
         path.AddLine(x + rad, y, x + w - rad, y);
         // Top-right corner
-        path.AddBezier(x + w - rad + k, y, x + w, y + rad - k, x + w, y + rad);
+        path.AddBezier(x + w - rad, y, x + w - rad + k, y, x + w, y + rad - k, x + w, y + rad);
         // Right edge
         path.AddLine(x + w, y + rad, x + w, y + h - rad);
         // Bottom-right corner
-        path.AddBezier(x + w, y + h - rad + k, x + w - rad + k, y + h, x + w - rad, y + h);
+        path.AddBezier(x + w, y + h - rad, x + w, y + h - rad + k, x + w - rad + k, y + h, x + w - rad, y + h);
         // Bottom edge
         path.AddLine(x + w - rad, y + h, x + rad, y + h);
         // Bottom-left corner
-        path.AddBezier(x + rad - k, y + h, x, y + h - rad + k, x, y + h - rad);
+        path.AddBezier(x + rad, y + h, x + rad - k, y + h, x, y + h - rad + k, x, y + h - rad);
         // Left edge
         path.AddLine(x, y + h - rad, x, y + rad);
         // Top-left corner
-        path.AddBezier(x, y + rad - k, x + rad - k, y, x + rad, y);
+        path.AddBezier(x, y + rad, x, y + rad - k, x + rad - k, y, x + rad, y);
 
         path.CloseFigure();
         return path;
