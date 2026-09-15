@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Product>PowerSave Studio</Product>
     <Authors>Vizzy · FSOS Labs</Authors>
     <Company>Vizzy · FSOS Labs</Company>

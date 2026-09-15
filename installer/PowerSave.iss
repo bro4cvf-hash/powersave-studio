@@ -19,7 +19,7 @@
 #endif
 
 #define MyAppName "PowerSave Studio"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.0.1"
 #define MyAppPublisher "Vizzy · FSOS Labs"
 #define MyAppExeName "PowerSave.exe"
 #define MyAppId "{{9B6C4E2A-7D41-4F87-B1E3-2C5A64F0D913}"
