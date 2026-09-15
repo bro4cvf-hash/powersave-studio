@@ -9,6 +9,7 @@ public sealed partial class MainForm : Form
     readonly PowerManager _pm;
     readonly BatteryMonitor _battery = new();
     readonly List<ModeCard> _cards = new();
+    readonly CliOptions _cli;
 
     TitleBar _titleBar = null!;
     StatusPill _pill = null!;
@@ -24,6 +25,7 @@ public sealed partial class MainForm : Form
     string _visualKey = "";
     bool _busy;
     bool _layoutGuard;
+    bool _startupDone;
     LayoutTier _tier = Tiers.Normal;
     int _headerHeight;
     int _activeTab; // 0 Modes, 1 Battery, 2 Advanced
@@ -35,6 +37,7 @@ public sealed partial class MainForm : Form
     public MainForm(AppSettings settings, CliOptions cli)
     {
         _settings = settings;
+        _cli = cli;
         _pm = new PowerManager(_settings);
         Theme.InitScale(DeviceDpi);
 
@@ -61,11 +64,30 @@ public sealed partial class MainForm : Form
         _batteryTimer = new System.Windows.Forms.Timer { Interval = 60_000 };
         _batteryTimer.Tick += (_, _) => RefreshBattery();
 
-        Load += async (_, _) =>
+        Load += async (_, _) => await RunStartupAsync().ConfigureAwait(true);
+
+        VisibleChanged += (_, _) =>
         {
-            // Respect reduced-motion / startup minimized
-            bool doAnim = cli.StartMinimized ? false : true;
-            if (doAnim)
+            if (_batteryTimer is not null)
+                _batteryTimer.Interval = Visible ? 60_000 : 300_000;
+        };
+    }
+
+    /// <summary>
+    /// One-time startup work (battery refresh, mode detection, global tweaks, --apply).
+    /// Runs from Form.Load when the window is shown, and is invoked explicitly by
+    /// AppContext when starting minimized to tray (Form.Load never fires for a form
+    /// that is never made visible). Idempotent.
+    /// </summary>
+    public async Task RunStartupAsync()
+    {
+        if (_startupDone) return;
+        _startupDone = true;
+
+        try
+        {
+            // Entrance animation — only when the window is actually visible
+            if (Visible && !_cli.StartMinimized)
             {
                 var final = Location;
                 Location = new Point(final.X, final.Y + Theme.S(12));
@@ -97,23 +119,23 @@ public sealed partial class MainForm : Form
             Native.TrimWorkingSet();
             RefreshBattery();
             await DetectCurrentModeAsync().ConfigureAwait(true);
-            if (cli.ApplyMode is not null) ApplyFromExternal(cli.ApplyMode);
+            if (_cli.ApplyMode is not null)
+                ApplyFromExternal(_cli.ApplyMode, showWindow: !_cli.StartMinimized);
             _batteryTimer.Start();
             GC.Collect(1, GCCollectionMode.Optimized);
             Native.TrimWorkingSet();
-        };
-
-        VisibleChanged += (_, _) =>
+        }
+        catch (Exception ex)
         {
-            if (_batteryTimer is not null)
-                _batteryTimer.Interval = Visible ? 60_000 : 300_000;
-        };
+            Logger.Error("startup initialization failed", ex);
+        }
     }
 
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
         base.OnDpiChanged(e);
         Theme.InitScale(e.DeviceDpiNew);
+        RecomputeHeaderHeight();
         PerformLayoutUi();
         Invalidate(true);
     }
@@ -129,9 +151,7 @@ public sealed partial class MainForm : Form
         };
         Controls.Add(_titleBar);
 
-        int greetH = TextRenderer.MeasureText("Ag", Theme.Display(14.5f, bold: true)).Height;
-        int dateH = TextRenderer.MeasureText("Ag", Theme.Body(8.2f)).Height;
-        _headerHeight = greetH + Theme.S(4) + dateH + Theme.S(12);
+        RecomputeHeaderHeight();
 
         _greeting = new Label
         {
@@ -345,7 +365,7 @@ public sealed partial class MainForm : Form
         var rows = _advanced.Controls.OfType<ToggleRow>().ToList();
         var t = _settings.Toggles;
 
-        void Bind(ToggleRow row, Action<bool> apply, bool deferredEffect)
+        void Bind(ToggleRow row, Action<bool> apply)
         {
             row.Toggled += (_, on) =>
             {
@@ -358,7 +378,7 @@ public sealed partial class MainForm : Form
 
         if (rows.Count >= 6)
         {
-            Bind(rows[0], v => t.PauseIndexingOnUltraSave = v, true);
+            Bind(rows[0], v => t.PauseIndexingOnUltraSave = v);
             rows[1].Toggled += (_, on) =>
             {
                 t.ReduceVisualEffectsOnUltraSave = on;
@@ -372,19 +392,19 @@ public sealed partial class MainForm : Form
                 _pill.Set($"VISUALS: {(on ? "OPTIMIZED" : "RESTORED")}", on ? Theme.Green : Theme.TextDim, animate: true);
                 _ = RevertPillAfterDelay(1800);
             };
-            Bind(rows[2], v => t.WifiPowerSaving = v, true);
-            Bind(rows[3], v => t.UsbSelectiveSuspendOff = v, true);
+            Bind(rows[2], v => t.WifiPowerSaving = v);
+            Bind(rows[3], v => t.UsbSelectiveSuspendOff = v);
             Bind(rows[4], v =>
             {
                 t.KeepDisplayAwakeOnPerf = v;
                 if (_visualKey == ModeKeys.UltraPerformance)
                     SystemTweaks.SetKeepAwake(v);
-            }, false);
+            });
             Bind(rows[5], v =>
             {
                 t.StartWithWindows = v;
                 SystemTweaks.SetStartWithWindows(v);
-            }, false);
+            });
         }
     }
 
@@ -406,5 +426,12 @@ public sealed partial class MainForm : Form
             if (IsHandleCreated) BeginInvoke(action);
         }
         catch { }
+    }
+
+    void RecomputeHeaderHeight()
+    {
+        int greetH = TextRenderer.MeasureText("Ag", Theme.Display(14.5f, bold: true)).Height;
+        int dateH = TextRenderer.MeasureText("Ag", Theme.Body(8.2f)).Height;
+        _headerHeight = greetH + Theme.S(4) + dateH + Theme.S(12);
     }
 }

@@ -237,8 +237,8 @@ internal sealed class QuickStrip : SkinControl
 
             if (_disabled)
             {
-                using var dis = new SolidBrush(Color.FromArgb(38, Theme.Surface));
-                Theme.FillSquircle(g, r, rad, Color.FromArgb(26, 0,0,0));
+                // Dimmed overlay
+                Theme.FillSquircle(g, r, rad, Color.FromArgb(26, 0, 0, 0));
             }
         }
 

@@ -52,7 +52,6 @@ internal sealed class TrayPopup : Form
         _entries.Add(new Entry { IsSeparator = true });
         foreach (var spec in ModeCatalog.All)
         {
-            string shortTitle = spec.PlanName.Replace("PowerSave — ", "").Replace("PowerSave ", "");
             // Map to nicer labels: Ultra Power Save / Balanced / Ultra Performance
             string label = spec.Key == ModeKeys.UltraPowerSave ? "Ultra Power Save" : spec.Key == ModeKeys.PowerSave ? "Balanced" : "Ultra Performance";
             string key = spec.Key;
@@ -300,8 +299,6 @@ internal sealed class TrayPopup : Form
                     Theme.FillSquircle(g, hovRect, Theme.S(8), Theme.WithAlpha(Theme.SurfaceHover, 180));
                 }
                 // Check indicator left
-                int iconSize = Theme.S(14);
-                int checkW = Theme.S(20);
                 int textLeft = rect.X + Theme.S(10);
                 if (en.IsChecked)
                 {
@@ -315,7 +312,6 @@ internal sealed class TrayPopup : Form
                     using var bgBrush = new SolidBrush(Color.FromArgb(36, checkBg));
                     g.FillEllipse(bgBrush, box);
                     var chkRect = new RectangleF(box.X + sz*0.22f, box.Y + sz*0.22f, sz*0.56f, sz*0.56f);
-                    using var pen = new Pen(checkBg, Theme.Sf(1.5f)) { StartCap = LineCap.Round, EndCap = LineCap.Round, LineJoin = LineJoin.Round };
                     Icons.DrawCheckmarkSimple(g, chkRect, checkBg, Theme.Sf(1.4f));
                     textLeft = box.Right + Theme.S(8);
                 }

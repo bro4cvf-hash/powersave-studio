@@ -13,8 +13,11 @@ public sealed class AppContext : ApplicationContext
     {
         var settings = SettingsStore.Load();
         _form = new MainForm(settings, cli);
-        MainForm = _form;
 
+        // IMPORTANT: MainForm is intentionally never assigned here.
+        // Application.Run() force-shows ApplicationContext.MainForm, which would flash the
+        // window when starting minimized to tray. Instead we Show() explicitly (normal
+        // start) or keep the form hidden (tray start), and drive shutdown from FormClosed.
         _ipc.MessageReceived += line =>
         {
             try
@@ -39,21 +42,18 @@ public sealed class AppContext : ApplicationContext
         };
         _ipc.Start();
 
-        // Avoid flash when starting minimized — don't Show(), let tray handle it
         if (cli.StartMinimized)
         {
-            // Ensure handle is created so IPC BeginInvoke works, but stay hidden
-            _form.Load += (_, _) =>
-            {
-                try { _form.BeginInvoke(new Action(() => { if (!_form.IsDisposed) _form.HideToTray(silent: true); })); } catch { }
-            };
-            // Create handle without making visible
-            var handle = _form.Handle;
-            _form.BeginInvoke(new Action(() => Logger.Info("started minimized to tray")));
+            // Create the handle (without making the form visible) so IPC BeginInvoke works.
+            // Form.Load never fires for a form that is never shown, so the startup path
+            // (battery timer, tweaks, mode detection, --apply) is invoked explicitly.
+            _ = _form.Handle;
+            _form.BeginInvoke(new Action(() => _ = _form.RunStartupAsync()));
+            Logger.Info("started minimized to tray");
         }
         else
         {
-            _form.Show();
+            _form.Show(); // fires Load -> MainForm.RunStartupAsync
         }
 
         _form.FormClosed += (_, _) =>

@@ -42,6 +42,14 @@ public sealed partial class MainForm
         base.OnHandleCreated(e);
         try
         {
+            // Handle the case where the initial DPI differs from ctor-time DeviceDpi
+            // (PerMonitorV2) — everything was laid out at the old scale.
+            if (Math.Abs(DeviceDpi / 96f - Theme.ScaleFactor) > 0.01f)
+            {
+                Theme.InitScale(DeviceDpi);
+                RecomputeHeaderHeight();
+            }
+
             // Windows 11 rounded corners + dark mode
             int pref = Native.DWMWCP_ROUND;
             Native.DwmSetWindowAttribute(Handle, Native.DWMWA_WINDOW_CORNER_PREFERENCE, ref pref, 4);

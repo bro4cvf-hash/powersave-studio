@@ -6,16 +6,19 @@ using PowerSave.Core;
 
 internal sealed class BatteryCard : SkinControl
 {
-    BatteryReading _reading = BatteryMonitor.ReadOnce();
+    BatteryReading _reading;
     TimeSpan? _estimate;
     double? _drainPerHour;
     double _arcT;
-    double _shownPct = BatteryMonitor.ReadOnce().Percent;
+    double _shownPct;
     double _pulseT = 1;
     bool _pulsing;
 
     public BatteryCard()
     {
+        var initial = BatteryMonitor.ReadOnce();
+        _reading = initial;
+        _shownPct = initial.HasBattery ? initial.Percent : 0;
         TabStop = false;
     }
 

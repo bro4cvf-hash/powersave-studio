@@ -1,0 +1,109 @@
+name: Build setup.exe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master, "arena/**"]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+# Serialize builds per ref — prevents two runs racing to commit setup.exe back
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-2022 # Inno Setup 6 + .NET 8 SDK preinstalled
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish (self-contained, single file)
+        run: >
+          dotnet publish PowerSave.csproj -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:EnableCompressionInSingleFile=true -p:DebugType=none -o installer/publish
+
+      - name: Publish (framework-dependent portable)
+        run: >
+          dotnet publish PowerSave.csproj -c Release -r win-x64 --self-contained false
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none -o installer/publish-fx
+
+      - name: Compile Inno Setup installer
+        run: >
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" installer\PowerSave.iss /DPayloadDir=publish
+        shell: pwsh
+
+      - name: Zip portable build
+        run: Compress-Archive -Path installer\publish-fx\* -DestinationPath installer\output\PowerSave-portable.zip
+        shell: pwsh
+
+      - name: Show output
+        run: Get-ChildItem installer\output | Format-Table Name, Length
+        shell: pwsh
+
+      - name: Upload setup.exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PowerSave-Setup
+          path: installer/output/PowerSave-Setup.exe
+          if-no-files-found: error
+
+      - name: Upload portable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PowerSave-portable
+          path: installer/output/PowerSave-portable.zip
+          if-no-files-found: error
+
+      # Keep the shipped setup.exe inside the codebase (installer/output/).
+      # Pushes made with GITHUB_TOKEN do not re-trigger workflows, so this
+      # cannot loop. [skip ci] belt-and-braces.
+      - name: Commit setup.exe back to the repo
+        if: github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add installer/output/PowerSave-Setup.exe
+          if git diff --cached --quiet; then
+            echo "setup.exe unchanged — nothing to commit"
+            exit 0
+          fi
+          git commit -m "chore(ci): rebuild installer/output/PowerSave-Setup.exe [skip ci]"
+          for i in 1 2 3; do
+            if git push; then exit 0; fi
+            echo "push failed (attempt $i) — rebasing on remote and retrying"
+            git fetch origin "$GITHUB_REF_NAME"
+            if ! git rebase "origin/$GITHUB_REF_NAME" -X ours; then
+              git rebase --abort
+              echo "rebase failed — skipping commit-back this run"
+              exit 0
+            fi
+          done
+          echo "could not push setup.exe after retries"
+          exit 1
+
+      - name: Create GitHub Release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            installer/output/PowerSave-Setup.exe \
+            installer/output/PowerSave-portable.zip \
+            --title "PowerSave Studio $GITHUB_REF_NAME" \
+            --generate-notes || \
+          gh release upload "$GITHUB_REF_NAME" \
+            installer/output/PowerSave-Setup.exe \
+            installer/output/PowerSave-portable.zip --clobber
