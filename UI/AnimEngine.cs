@@ -76,12 +76,13 @@ internal static class AnimEngine
             if (raw >= 1)
             {
                 lock (_lock) _active.Remove(anim);
-                anim.Step(1);
-                anim.Target.Invalidate();
+                try { anim.Step(1); anim.Target.Invalidate(); }
+                catch { /* target disposed mid-animation */ }
             }
             else
             {
-                anim.Step(raw);
+                try { anim.Step(raw); }
+                catch { lock (_lock) _active.Remove(anim); continue; }
                 anyLive = true;
             }
         }

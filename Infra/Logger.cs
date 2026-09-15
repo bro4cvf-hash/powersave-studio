@@ -77,4 +77,12 @@ public static class Logger
         }
         try { File.AppendAllLines(_path, items); } catch { }
     }
+
+    /// <summary>Stop the flush timer and flush remaining entries. Call once at exit.</summary>
+    public static void Shutdown()
+    {
+        try { _flushTimer?.Dispose(); } catch { }
+        _flushTimer = null;
+        Flush();
+    }
 }

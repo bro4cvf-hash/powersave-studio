@@ -57,9 +57,9 @@ public sealed partial class MainForm
             card.SetSelected(string.Equals(card.Spec.Key, key, StringComparison.OrdinalIgnoreCase));
     }
 
-    public void ApplyFromExternal(string key)
+    public void ApplyFromExternal(string key, bool showWindow = true)
     {
-        ShowFromTray();
+        if (showWindow) ShowFromTray();
         _ = ApplyModeAsync(key);
     }
 

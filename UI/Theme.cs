@@ -119,8 +119,9 @@ internal static class Theme
     }
 
     // ── Squircle — Apple continuous corner ─────────────────────
-    // Approximates superellipse (n=5) with 4 cubic Beziers.
-    // Generates G2-continuous corners like iOS app icons.
+    // Symmetric continuous corner with 4 identical cubic Beziers,
+    // like iOS app icons. (The previous version was asymmetric and
+    // passed an invalid 6-argument AddBezier — did not compile.)
     public static GraphicsPath Squircle(Rectangle r, int radius)
     {
         if (r.Width <= 0 || r.Height <= 0)
@@ -134,57 +135,35 @@ internal static class Theme
             return p0;
         }
 
-        // Apple squircle control factor — iOS uses ~0.55 of radius for curvature
-        // We use cubic bezier with magic constant for superellipse
-        // Standard rounded rect uses 0.552284 for circle; squircle uses tighter ~0.7
         float rad = radius;
-        float w = r.Width;
-        float h = r.Height;
         float x = r.X;
         float y = r.Y;
+        float w = r.Width;
+        float h = r.Height;
 
-        // Smoothness coefficient — 0.55 gives Apple-like squircle (more square than circle, but continuous)
-        // Derived from Figma / Apple HIG continuous corner approximation
-        float c = rad * 0.552284f; // for circular blend
-        // Extra smoothing towards squircle: stretch control points by factor
-        float s = rad * 0.17f; // squircle offset — makes curve less circular, more superellipse
+        // Symmetric continuous corner: one cubic bezier per corner, identical handle
+        // length along both edges. 0.552284 is the circle-arc constant; the 1.08
+        // stretch gives a slightly fuller, Apple-squircle feel without overshoot.
+        float k = rad * 0.552284f * 1.08f;
 
         var path = new GraphicsPath();
-
-        // Start at top edge, left + radius
         path.StartFigure();
         // Top edge
         path.AddLine(x + rad, y, x + w - rad, y);
-        // Top-right corner — cubic bezier for squircle
-        path.AddBezier(
-            x + w - rad + s, y,
-            x + w - s, y,
-            x + w, y + s,
-            x + w, y + rad);
+        // Top-right corner
+        path.AddBezier(x + w - rad + k, y, x + w, y + rad - k, x + w, y + rad);
         // Right edge
         path.AddLine(x + w, y + rad, x + w, y + h - rad);
-        // Bottom-right
-        path.AddBezier(
-            x + w, y + h - rad + c * 0.15f - s * 0.5f,
-            x + w, y + h - s,
-            x + w - s, y + h,
-            x + w - rad, y + h);
+        // Bottom-right corner
+        path.AddBezier(x + w, y + h - rad + k, x + w - rad + k, y + h, x + w - rad, y + h);
         // Bottom edge
         path.AddLine(x + w - rad, y + h, x + rad, y + h);
-        // Bottom-left
-        path.AddBezier(
-            x + rad - s, y + h,
-            x + s, y + h,
-            x, y + h - s,
-            x, y + h - rad);
+        // Bottom-left corner
+        path.AddBezier(x + rad - k, y + h, x, y + h - rad + k, x, y + h - rad);
         // Left edge
         path.AddLine(x, y + h - rad, x, y + rad);
-        // Top-left
-        path.AddBezier(
-            x, y + rad - c * 0.15f + s * 0.5f,
-            x, y + s,
-            x + s, y,
-            x + rad, y);
+        // Top-left corner
+        path.AddBezier(x, y + rad - k, x + rad - k, y, x + rad, y);
 
         path.CloseFigure();
         return path;

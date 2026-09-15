@@ -9,6 +9,7 @@
     <RootNamespace>PowerSave</RootNamespace>
     <AssemblyName>PowerSave</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <Version>1.0.0</Version>
     <Product>PowerSave Studio</Product>

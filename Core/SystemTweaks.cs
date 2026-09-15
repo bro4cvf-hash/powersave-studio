@@ -211,6 +211,22 @@ public static class SystemTweaks
             if (settings.OriginalVisualFxReg is int reg) WriteVisualFxReg(reg);
             if (settings.OriginalUiEffects is bool fx) SetUiEffects(fx);
 
+            // Clear the snapshot so a future "optimize" re-reads the *current* system
+            // state instead of restoring values captured before an earlier restore
+            // (the user may have changed their theme in between).
+            settings.PerformanceTweaksSnapshotDone = false;
+            settings.VisualFxChangedByUs = false;
+            settings.OriginalTransparency = null;
+            settings.OriginalMinAnimate = null;
+            settings.OriginalDragFullWindows = null;
+            settings.OriginalTaskbarAnimations = null;
+            settings.OriginalListviewAlphaSelect = null;
+            settings.OriginalListviewShadow = null;
+            settings.OriginalDwmAeroPeek = null;
+            settings.OriginalAlwaysHibernateThumbnails = null;
+            settings.OriginalVisualFxReg = null;
+            settings.OriginalUiEffects = null;
+
             BroadcastSettingChange();
             Logger.Info("global performance tweaks restored");
         }

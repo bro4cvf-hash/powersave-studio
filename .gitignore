@@ -33,5 +33,7 @@ ehthumbs.db
 # Self-contained large drops (optional)
 # publish/selfcontained/
 
-# CI workflow excluded: needs gh token with 'workflow' scope to push
-.github/workflows/
+# Installer build intermediates (setup.exe output in installer/output IS committed)
+installer/publish/
+installer/publish-fx/
+installer/output/*.tmp

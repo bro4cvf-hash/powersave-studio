@@ -21,7 +21,7 @@ internal static class Program
                     Console.WriteLine("  PowerSave.exe --apply=ultrasave|powersave|ultraperf [--tray]");
                     Console.WriteLine("  PowerSave.exe --tray               start minimized to tray");
                     Console.WriteLine("  PowerSave.exe --help               show this help");
-                    Console.WriteLine("  Aliases: ultrasave/ultrasave/eco, balanced/save, ultraph/perf, etc.");
+                    Console.WriteLine("  Aliases: ultrasave|ups|us|ultraeco | powersave|balanced|save|ps|eco | ultraperf|perf|up");
                     Native.FreeConsole();
                 }
                 else
@@ -83,7 +83,7 @@ internal static class Program
         finally
         {
             AnimEngine.Shutdown();
-            Logger.Flush();
+            Logger.Shutdown();
         }
 
         return 0;
