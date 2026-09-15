@@ -179,7 +179,9 @@ public sealed class PowerManager
                 Set(PwrGuid.SubSleep, PwrGuid.SleepIdleTimeout, 1800, 900);
                 Set(PwrGuid.SubWireless, PwrGuid.WifiPowerLevel, 2, 2);
                 Set(PwrGuid.SubUsb, PwrGuid.UsbSelectiveSuspend, 1, 1);
-                Set(PwrGuid.SubPcie, PwrGuid.PcieAspm, 0, 0);
+                // 1 = moderate power savings — matches the Windows "Balanced" default;
+                // this is a power-saving mode, ASPM must not be off.
+                Set(PwrGuid.SubPcie, PwrGuid.PcieAspm, 1, 1);
                 break;
 
             case ModeKeys.UltraPerformance:

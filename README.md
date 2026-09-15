@@ -62,10 +62,17 @@ All three modes disable taskbar transparency and set **best-performance visuals*
 
 ## 🚀 Quick Start
 
-### Option A — Download
-Grab `PowerSave.exe` from **Releases** (~26 MB single-file framework-dependent) or `PowerSave self-contained.exe` (~69 MB, no runtime). Framework-dependent still needs the .NET 8 Desktop Runtime.
+### Option A — setup.exe (recommended)
 
-### Option B — Build
+1. Grab **`PowerSave-Setup.exe`** from **Releases** (or straight from the repo at `installer/output/PowerSave-Setup.exe`).
+2. Double-click → Next → Done. It installs per-user (no UAC), adds a Start-menu shortcut, an optional desktop icon, and a clean uninstaller.
+3. Launch **PowerSave Studio**. That's it — the setup bundles a **self-contained** build, so no .NET runtime is needed.
+
+### Option B — Portable
+
+Grab `PowerSave-portable.zip` from **Releases** (framework-dependent single exe, needs [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime)), unzip, run.
+
+### Option C — Build it yourself
 Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 ```powershell
@@ -74,6 +81,9 @@ Requires [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 
 # Standalone (no runtime needed) -> publish selfcontained/
 .\build.ps1 -SelfContained
+
+# Full setup.exe installer (needs .NET 8 SDK + Inno Setup 6) -> installer\output\
+.\installer\build-installer.ps1
 
 # Build + launch
 .\build.ps1 -Run
@@ -84,7 +94,10 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:PublishSingleFile
 
 Framework-dependent single-file is ~26 MB (includes the 24 MB `Microsoft.Windows.SDK.NET.dll` projection + app).  
 Self-contained is ~69 MB (no runtime needed).  
-Framework-dependent builds need the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime). If missing, use `-SelfContained`.
+`setup.exe` is the self-contained build compressed with Inno Setup (LZMA2) — smaller to download, and it installs everything for you.  
+Framework-dependent builds need the [.NET 8 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/8.0/runtime). If missing, use the setup.exe or `-SelfContained`.
+
+> **CI:** every push to `master` (and every `v*` tag) builds `PowerSave-Setup.exe` on a Windows runner via **GitHub Actions** (`.github/workflows/build-installer.yml`) — tag pushes publish it as a GitHub Release automatically.
 
 ---
 
@@ -136,6 +149,9 @@ Aliases are normalized (`ultrasave`, `ups`, `balanced`, `eco`, `perf`, `up`, …
 ### Project layout
 ```
 PowerSave.csproj  UI/  Core/  Infra/  app.manifest  build.ps1
+Assets/app.ico  tools/make_icon.py  installer/PowerSave.iss  installer/build-installer.ps1
+installer/output/PowerSave-Setup.exe  (the ready-to-ship setup.exe)
+.github/workflows/build-installer.yml (CI: builds setup.exe on push/tag)
 UI/ Theme.cs Controls.cs ModeCard.cs BatteryCard.cs QuickStrip.cs AdvancedSection.cs
     Indicators.cs Icons.cs AnimEngine.cs TitleBar.cs TrayPopup.cs ModeProgressBar.cs MainForm.*
 Core/ Modes.cs PowerManager.cs BatteryMonitor.cs SystemTweaks.cs BluetoothController.cs

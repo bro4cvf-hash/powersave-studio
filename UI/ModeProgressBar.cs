@@ -67,7 +67,9 @@ internal sealed class ModeProgressBar : SkinControl
         double from = _target;
         _target = Math.Clamp(target, 0, 1);
         double to = _target;
-        AnimEngine.Animate(this, $"prog_{from}_{to}", v =>
+        // Fixed key: Animate() cancels any running animation with the same key,
+        // so overlapping progress tweens can't fight over _progress.
+        AnimEngine.Animate(this, "prog", v =>
         {
             _progress = from + (to - from) * v;
             Invalidate();
